@@ -1,0 +1,39 @@
+PRE = "chr22_cdna_t"
+GTF = "{0}.gtf.gz".format(PRE)
+FASTA = "{0}.fa".format(PRE)
+INDEX = "{0}.idx".format(PRE)
+
+rule all:
+    input:
+        "out/abundance.h5"
+
+rule index:
+    input:
+        FASTA = FASTA
+    output:
+        INDEX
+    benchmark:
+        repeat("benchmarks/benchmark.kallisto_index.txt",3)
+    shell:
+        "kallisto index -i {output} {input}"
+
+rule kallisto_quant:
+    input:
+        "reads_1.fastq",
+        "reads_2.fastq",
+        INDEX = INDEX
+    params:
+        outdire="out_kall"
+    output:
+        "out/abundance.h5",
+        "out/abundance.tsv",
+        "out/run_info.json"
+    benchmark:
+        repeat("benchmarks/benchmark.kallisto_quant.txt",3)
+    shell:
+        "kallisto quant "
+        "-t 4 "
+        "-i {INDEX} "
+        "-b 30 "
+        "-o out "
+        "{input[0]} {input[1]}"
