@@ -3,9 +3,10 @@
 ###########################################################
 # Put the Snakefile in a folder along with the config.json, and an /input/ folder
 # Reads must be in the /input/ folder
+# You must change the read extension in the config file, ex: "READ_EXTENSION" : "fastq"
 # You must change the paths for the DNA, cDNA and the GTF file in the config.json file, ending with a /
 # The genomes must be .fa
-# The reads must be .fastq or compressed, change the SUP_STAR_COMPR parameter in config file to "--readFilesCommand zcat" if using compressed reads
+# If the reads are compressed, change the SUP_STAR_COMPR parameter in the config file to "--readFilesCommand zcat"
 # You must add the list of experimental conditions as a list in the config file, ex: "SAMPLE": ["C1reads", "C2reads"]
 # You can change the separator between the read name and number, ex: "C1reads_1" "C1reads_2"
 #
