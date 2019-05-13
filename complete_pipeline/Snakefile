@@ -2,7 +2,8 @@
 ######## Pipeline STAR - STAR QUANTMODE - KALLISTO#########
 ###########################################################
 # Put the Snakefile in a folder along with the config.json, and an /input/ folder
-# DNA and cDNA genomes, reads and gtf/gff files must be in the /input/ folder
+# Reads must be in the /input/ folder
+# You must change the paths for the DNA, cDNA and the GTF file in the config.json file, ending with a /
 # The genomes must be .fa
 # The reads must be .fastq or compressed, change the SUP_STAR_COMPR parameter in config file to "--readFilesCommand zcat" if using compressed reads
 # You must add the list of experimental conditions as a list in the config file, ex: "SAMPLE": ["C1reads", "C2reads"]
@@ -33,10 +34,10 @@ PRE_GTF = config["GTF"]
 DNA_PATH = config["DNA_PATH"]
 CDNA_PATH = config["CDNA_PATH"]
 GTF_PATH = config["GTF_PATH"]
-FASTA = "{DNA_PATH}/{0}.fa".format(PRE_DNA)
-CDNA = "{CDNA_PATH}/{0}.fa".format(PRE_CDNA)
+FASTA = "{DNA_PATH}{0}.fa".format(PRE_DNA)
+CDNA = "{CDNA_PATH}{0}.fa".format(PRE_CDNA)
 FAIDX = "star/faidx/{0}.fai".format(PRE_DNA)
-GTF = "{GTF_PATH}/{0}.gtf".format(PRE_GTF)
+GTF = "{GTF_PATH}{0}.gtf".format(PRE_GTF)
 INDEXS = "star/genome/SAindex"
 INDEXK = "kallisto/{0}.idx".format(PRE_CDNA)
 BAM = "bam/Aligned.out.bam"
