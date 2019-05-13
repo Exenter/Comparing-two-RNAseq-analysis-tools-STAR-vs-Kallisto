@@ -1,0 +1,10 @@
+{ 
+"CDNA":"chr22_cdna_t",
+"DNA" : "HS_chr22",
+"GTF" : "hs_grch37",
+"SEPARATEUR":"_",
+"PRE_READS":"reads",
+"SAMPLE": ["C1reads", "C2reads"],
+"SUP_STAR_COMPR" : "",
+"THREADS" : "2"
+}
