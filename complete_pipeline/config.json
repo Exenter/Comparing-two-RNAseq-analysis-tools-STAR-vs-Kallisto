@@ -6,5 +6,8 @@
 "PRE_READS":"reads",
 "SAMPLE": ["C1reads", "C2reads"],
 "SUP_STAR_COMPR" : "",
-"THREADS" : "2"
+"THREADS" : "2",
+"DNA_PATH" : "",
+"CDNA_PATH": "",
+"GTF_PATH" : ""
 }
