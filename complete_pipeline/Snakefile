@@ -12,7 +12,7 @@
 #
 # For paired-end reads (2 files)
 #
-# To launch: move to your directory and type snakemake in the terminal, add -j [number of threads] to choose the number of threads
+# To launch: move to your directory and type snakemake in the terminal, add -j [number of threads] to choose the total number of threads
 #
 # Process :
 #     Index the reference genome with STAR
@@ -29,26 +29,34 @@
 ################################
 ################################
 configfile: "config.json"
+
 PRE_DNA = config["DNA"]
 PRE_CDNA = config["CDNA"]
 PRE_GTF = config["GTF"]
+
 DNA_PATH = config["DNA_PATH"]
 CDNA_PATH = config["CDNA_PATH"]
 GTF_PATH = config["GTF_PATH"]
+
 FASTA = DNA_PATH+"{0}.fa".format(PRE_DNA)
 CDNA = CDNA_PATH+"{0}.fa".format(PRE_CDNA)
-FAIDX = "star/faidx/{0}.fai".format(PRE_DNA)
 GTF = GTF_PATH+"{0}.gtf".format(PRE_GTF)
+
+FAIDX = "star/faidx/{0}.fai".format(PRE_DNA)
 INDEXS = "star/genome/SAindex"
 INDEXK = "kallisto/{0}.idx".format(PRE_CDNA)
+
 BAM = "bam/Aligned.out.bam"
 BAM_SORTED = "bam/Aligned.out.sorted.bam"
 BAM_SORTED_INDEX = "bam/Aligned.out.sorted.bam.bai"
-SEP = config["SEPARATEUR"]
+
+SEP = config["SEPARATOR"]
 R1 = "1"
 R2 = "2"
 COMPR = config["SUP_STAR_COMPR"]
 READ_EXT = config["READ_EXTENSION"]
+
+THREADS = config["THREADS"]
 
 # Output files
 rule all:
@@ -63,15 +71,16 @@ rule star_index:
     FASTA = FASTA
   output:
     INDEXS
+  params:
+    overhang = config["READ_LENGTH_MINUS_1"],
+    THREADS = THREADS
   benchmark:
     repeat("benchmarks/benchmark.star_index.txt",1)
   message:
     "Indexing reference genome ..."
   shell:
-      "STAR --runThreadN 2 --runMode genomeGenerate --genomeDir ./star/genome --genomeFastaFiles ./{input}"
+      "STAR --runThreadN {params.THREADS} --runMode genomeGenerate --sjdbOverhang {params.overhang} --genomeDir ./star/genome --genomeFastaFiles {input}"
     
-#on donne 12 threads à snakemake, puis dans les commandes on donne 4
-
  #Mapping
 rule star_map_reads:
   input:
@@ -82,13 +91,14 @@ rule star_map_reads:
     "star/sam/{sample}Aligned.out.sam"
   params:
     PREFIX = "star/sam/{sample}",
-    COMPR = COMPR
+    COMPR = COMPR,
+    THREADS = THREADS
   benchmark:
-    repeat("benchmarks/benchmark.star_map_reads_{sample}.txt",1)
+    repeat("benchmarks/benchmark.star_map_reads_{sample}.txt",10)
   message:
     "Mapping reads on the genome ..."
   shell:
-    "STAR --genomeDir ./star/genome {params.COMPR} --runThreadN 1 --outFileNamePrefix {params.PREFIX} --readFilesIn ./{input.R1} ./{input.R2}"
+    "STAR --genomeDir ./star/genome {params.COMPR} --runThreadN {params.THREADS} --outFileNamePrefix {params.PREFIX} --readFilesIn ./{input.R1} ./{input.R2}"
 
 #STAR quantmode
 rule star_quantmode:
@@ -101,13 +111,14 @@ rule star_quantmode:
   params:
     PREFIX = "star/quantmode/{sample}",
     COMPR = COMPR,
-    GTF = GTF
+    GTF = GTF,
+    THREADS = THREADS
   benchmark:
-    repeat("benchmarks/benchmark.star_quantmode{sample}.txt",1)
+    repeat("benchmarks/benchmark.star_quantmode{sample}.txt",10)
   message:
     "Mapping and couting reads on the genome ..."
   shell:
-    "STAR --genomeDir ./star/genome {params.COMPR} --sjdbGTFfile {params.GTF} --quantMode GeneCounts --runThreadN 2 --outFileNamePrefix {params.PREFIX} --readFilesIn ./{input.R1} ./{input.R2}"
+    "STAR --genomeDir ./star/genome {params.COMPR} --sjdbGTFfile {params.GTF} --quantMode GeneCounts --runThreadN {params.THREADS} --outFileNamePrefix {params.PREFIX} --readFilesIn ./{input.R1} ./{input.R2}"
 
 
 ## Samtools faidx
@@ -132,7 +143,7 @@ rule samTobam:
   output:
     "star/bam/{sample}Aligned.out.bam"
   benchmark:
-    repeat("benchmarks/benchmark.samtools_samtobam_{sample}.txt",1)
+    repeat("benchmarks/benchmark.samtools_samtobam_{sample}.txt",10)
   message:
     "Converting .sam to .bam ..."
   shell:
@@ -146,7 +157,7 @@ rule samtools_sort:
   output:
     "star/bam/{sample}Aligned.out.sorted.bam"
   benchmark:
-    repeat("benchmarks/benchmark.star_samtools_sort_{sample}.txt",1)
+    repeat("benchmarks/benchmark.star_samtools_sort_{sample}.txt",10)
   message:
     "Sorting bam file ..."
   shell:
@@ -160,7 +171,7 @@ rule samtools_index:
   output:
     "star/bam/{sample}Aligned.out.sorted.bam.bai"
   benchmark:
-    repeat("benchmarks/benchmark.star_samtools_index_{sample}.txt",1)
+    repeat("benchmarks/benchmark.star_samtools_index_{sample}.txt",10)
   message:
     " Indexing bam file ..."
   shell:
@@ -174,7 +185,7 @@ rule htseq_count:
   output:
     "star/out/{sample}counts_htseq.txt" 
   benchmark:
-    repeat("benchmarks/benchmark.star_htseqcount_{sample}.txt",1)
+    repeat("benchmarks/benchmark.star_htseqcount_{sample}.txt",10)
   message:
     "Counting reads"
   shell:
@@ -204,10 +215,10 @@ rule kallisto_quant:
         "kallisto/out/{sample}/abundance.tsv",
         "kallisto/out/{sample}/run_info.json"
     benchmark:
-        repeat("benchmarks/benchmark.kallisto_quant_{sample}.txt",1)
+        repeat("benchmarks/benchmark.kallisto_quant_{sample}.txt",10)
     shell:
         "kallisto quant "
-        "-t 1 "
+        "-t {params.THREADS} "
         "-i {input.INDEX} "
         "-b 30 "
         "-o {params.outdire} "
