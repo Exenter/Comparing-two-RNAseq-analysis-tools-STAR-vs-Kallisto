@@ -30,10 +30,13 @@ configfile: "config.json"
 PRE_DNA = config["DNA"]
 PRE_CDNA = config["CDNA"]
 PRE_GTF = config["GTF"]
-FASTA = "input/{0}.fa".format(PRE_DNA)
-CDNA = "input/{0}.fa".format(PRE_CDNA)
+DNA_PATH = config["DNA_PATH"]
+CDNA_PATH = config["CDNA_PATH"]
+GTF_PATH = config["GTF_PATH"]
+FASTA = "{DNA_PATH}/{0}.fa".format(PRE_DNA)
+CDNA = "{CDNA_PATH}/{0}.fa".format(PRE_CDNA)
 FAIDX = "star/faidx/{0}.fai".format(PRE_DNA)
-GTF = "input/{0}.gtf".format(PRE_GTF)
+GTF = "{GTF_PATH}/{0}.gtf".format(PRE_GTF)
 INDEXS = "star/genome/SAindex"
 INDEXK = "kallisto/{0}.idx".format(PRE_CDNA)
 BAM = "bam/Aligned.out.bam"
