@@ -1,0 +1,213 @@
+###########################################################
+######## Pipeline STAR - STAR QUANTMODE - KALLISTO#########
+###########################################################
+# Les fichiers de génomes doivent être dans /genome/
+# L'extension doit être .fa.gz
+# Les reads doivent être dans /reads/
+# Leur extension est .fastq.gz
+#
+# Pour des données paired-end (2 fichiers : _read1/_read2.fastq):
+# input:
+#     genome.fa.gz
+#     _read1.fastq
+#     _read2.fastq
+# output:
+#     ?
+#
+# processus :
+#     Index du génome de référence
+#     Mapping de données (output.sam)
+#     sam to bam
+#     Rangement des données par coordonnées génomique (samtools sort)
+#     Indexer le fichier ordonnée (samtools index)
+#     Comptage des reads in feature (htseq_cout)
+#
+################################
+################################
+configfile: "config.json"
+PRE_DNA = config["DNA"]
+PRE_CDNA = config["CDNA"]
+PRE_GTF = config["GTF"]
+FASTA = "input/{0}.fa".format(PRE_DNA)
+CDNA = "input/{0}.fa".format(PRE_CDNA)
+FAIDX = "star/faidx/{0}.fai".format(PRE_DNA)
+GTF = "input/{0}.gtf".format(PRE_GTF)
+INDEXS = "star/genome/SAindex"
+INDEXK = "kallisto/{0}.idx".format(PRE_CDNA)
+BAM = "bam/Aligned.out.bam"
+BAM_SORTED = "bam/Aligned.out.sorted.bam"
+BAM_SORTED_INDEX = "bam/Aligned.out.sorted.bam.bai"
+SEP = config["SEPARATEUR"]
+R1 = "1"
+R2 = "2"
+COMPR = config["SUP_STAR_COMPR"]
+
+# Fichiers de sortie
+rule all:
+  input:
+    expand("star/out/{sample}counts_htseq.txt", sample = config["SAMPLE"]),
+    expand("kallisto/out/{sample}/abundance.h5", sample = config["SAMPLE"]),
+    expand("star/quantmode/{sample}ReadsPerGene.out.tab", sample = config["SAMPLE"])
+
+
+   
+#expand(out/counts{sample}.txt, sample = qqch (on peut aller chercher dans config))
+#Sample = C1, C2 pour la liste des préfixes, à mettre en haut ou dans config
+#"Samples" : [ "C1", "C2"]
+#expand("{prefix}.count.txt", prefix = config.samples)
+
+#index du génome de référence avec STAR
+rule star_index:
+  input:
+    FASTA = FASTA
+  output:
+    INDEXS
+  benchmark:
+    repeat("benchmarks/benchmark.star_index.txt",1)
+  message:
+    "Indexing reference genome ..."
+  shell:
+      "STAR --runThreadN 2 --runMode genomeGenerate --genomeDir ./star/genome --genomeFastaFiles ./{input}"
+    
+#on donne 12 threads à snakemake, puis dans les commandes on donne 4
+
+ #Mapping
+rule star_map_reads:
+  input:
+    INDEX = INDEXS,
+    R1 = "input/{sample}"+SEP+R1+".fastq",
+    R2 = "input/{sample}"+SEP+R2+".fastq"
+  output:
+    "star/sam/{sample}Aligned.out.sam"
+  params:
+    PREFIX = "star/sam/{sample}",
+    COMPR = COMPR
+  benchmark:
+    repeat("benchmarks/benchmark.star_map_reads_{sample}.txt",1)
+  message:
+    "Mapping reads on the genome ..."
+  shell:
+    "STAR --genomeDir ./star/genome {params.COMPR} --runThreadN 1 --outFileNamePrefix {params.PREFIX} --readFilesIn ./{input.R1} ./{input.R2}"
+
+#STAR quantmode
+rule star_quantmode:
+  input:
+    INDEX = INDEXS,
+    R1 = "input/{sample}"+SEP+R1+".fastq",
+    R2 = "input/{sample}"+SEP+R2+".fastq"
+  output:
+    "star/quantmode/{sample}ReadsPerGene.out.tab"
+  params:
+    PREFIX = "star/quantmode/{sample}",
+    COMPR = COMPR,
+    GTF = GTF
+  benchmark:
+    repeat("benchmarks/benchmark.star_quantmode{sample}.txt",1)
+  message:
+    "Mapping and couting reads on the genome ..."
+  shell:
+    "STAR --genomeDir ./star/genome {params.COMPR} --sjdbGTFfile {params.GTF} --quantMode GeneCounts --runThreadN 2 --outFileNamePrefix {params.PREFIX} --readFilesIn ./{input.R1} ./{input.R2}"
+
+
+## Samtools faidx
+rule samtools_faidx:
+  input:
+    FASTA = FASTA
+  output:
+    FAIDX
+  benchmark:
+    repeat("benchmarks/benchmark.star_samtools_faidx.txt",1)
+  message:
+    "Indexing..."
+  shell:
+    "samtools faidx {input} > {output}"
+
+
+## Conversion .sam to .bam
+rule samTobam:
+  input:
+    SAM = "star/sam/{sample}Aligned.out.sam",
+    FAIDX = FAIDX
+  output:
+    "star/bam/{sample}Aligned.out.bam"
+  benchmark:
+    repeat("benchmarks/benchmark.samtools_samtobam_{sample}.txt",1)
+  message:
+    "Converting .sam to .bam ..."
+  shell:
+    "samtools view -bt {input.FAIDX} -S {input.SAM} > {output}"
+
+##
+## Samtools sort
+rule samtools_sort:
+  input:
+    "star/bam/{sample}Aligned.out.bam"
+  output:
+    "star/bam/{sample}Aligned.out.sorted.bam"
+  benchmark:
+    repeat("benchmarks/benchmark.star_samtools_sort_{sample}.txt",1)
+  message:
+    "Sorting bam file ..."
+  shell:
+    "samtools sort {input} -o  {output}"
+
+# # #
+## Samtools Index
+rule samtools_index:
+  input:
+    "star/bam/{sample}Aligned.out.sorted.bam"
+  output:
+    "star/bam/{sample}Aligned.out.sorted.bam.bai"
+  benchmark:
+    repeat("benchmarks/benchmark.star_samtools_index_{sample}.txt",1)
+  message:
+    " Indexing bam file ..."
+  shell:
+    "samtools index {input}"
+
+## Comptage des reads
+rule htseq_count:
+  input:
+    BAM_SORTED = "star/bam/{sample}Aligned.out.sorted.bam",
+    GTF = GTF
+  output:
+    "star/out/{sample}counts_htseq.txt" #htseq counts et kallisto counts
+  benchmark:
+    repeat("benchmarks/benchmark.star_htseqcount_{sample}.txt",1)
+  message:
+    "Counting reads"
+  shell:
+    "htseq-count -f bam -s reverse -r pos {input.BAM_SORTED} {input.GTF} > {output}"
+
+#kallisto
+
+rule kallisto_index:
+    input:
+        CDNA = CDNA
+    output:
+        INDEXK
+    benchmark:
+        repeat("benchmarks/benchmark.kallisto_index.txt",1)
+    shell:
+        "kallisto index -i {output} {input}"
+
+rule kallisto_quant:
+    input:
+        R1 = "input/{sample}"+SEP+R1+".fastq",
+        R2 = "input/{sample}"+SEP+R2+".fastq",
+        INDEX = INDEXK
+    params:
+        outdire="kallisto/out/{sample}"
+    output:
+        "kallisto/out/{sample}/abundance.h5",
+        "kallisto/out/{sample}/abundance.tsv",
+        "kallisto/out/{sample}/run_info.json"
+    benchmark:
+        repeat("benchmarks/benchmark.kallisto_quant_{sample}.txt",1)
+    shell:
+        "kallisto quant "
+        "-t 1 "
+        "-i {input.INDEX} "
+        "-b 30 "
+        "-o {params.outdire} "
+        "{input.R1} {input.R2}"
