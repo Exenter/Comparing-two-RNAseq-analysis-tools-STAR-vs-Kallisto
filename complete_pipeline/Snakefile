@@ -1,26 +1,26 @@
 ###########################################################
 ######## Pipeline STAR - STAR QUANTMODE - KALLISTO#########
 ###########################################################
-# Les fichiers de génomes doivent être dans /genome/
-# L'extension doit être .fa.gz
-# Les reads doivent être dans /reads/
-# Leur extension est .fastq.gz
+# DNA and cDNA genomes, reads and gtf/gff files must be in an /input/ folder
+# The genomes must be .fa
+# The reads must be .fastq or compressed, change the SUP_STAR_COMPR parameter in config file to "--readFilesCommand zcat" if using compressed reads
+# You must add the list of experimental conditions as a list in the config file, ex: "SAMPLE": ["C1reads", "C2reads"]
+# You can change the separator between the read name and number, ex: "C1reads_1" "C1reads_2"
 #
-# Pour des données paired-end (2 fichiers : _read1/_read2.fastq):
-# input:
-#     genome.fa.gz
-#     _read1.fastq
-#     _read2.fastq
-# output:
-#     ?
+# For paired-end reads (2 files)
 #
-# processus :
-#     Index du génome de référence
-#     Mapping de données (output.sam)
+#
+# Process :
+#     Index the reference genome with STAR
+#     Map the reads (output: sam) with STAR
 #     sam to bam
-#     Rangement des données par coordonnées génomique (samtools sort)
-#     Indexer le fichier ordonnée (samtools index)
-#     Comptage des reads in feature (htseq_cout)
+#     Sort by position (samtools sort)
+#     Index the sorted file (samtools index)
+#     Count the reads by feature (htseq_count) or with STAR quantmode
+#
+#     Index the cDNA genome with Kallisto
+#     Quantification with Kallisto
+#
 #
 ################################
 ################################
@@ -42,19 +42,12 @@ R1 = "1"
 R2 = "2"
 COMPR = config["SUP_STAR_COMPR"]
 
-# Fichiers de sortie
+# Output files
 rule all:
   input:
     expand("star/out/{sample}counts_htseq.txt", sample = config["SAMPLE"]),
     expand("kallisto/out/{sample}/abundance.h5", sample = config["SAMPLE"]),
     expand("star/quantmode/{sample}ReadsPerGene.out.tab", sample = config["SAMPLE"])
-
-
-   
-#expand(out/counts{sample}.txt, sample = qqch (on peut aller chercher dans config))
-#Sample = C1, C2 pour la liste des préfixes, à mettre en haut ou dans config
-#"Samples" : [ "C1", "C2"]
-#expand("{prefix}.count.txt", prefix = config.samples)
 
 #index du génome de référence avec STAR
 rule star_index:
