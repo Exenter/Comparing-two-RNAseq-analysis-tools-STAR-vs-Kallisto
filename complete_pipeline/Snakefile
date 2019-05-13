@@ -47,6 +47,7 @@ SEP = config["SEPARATEUR"]
 R1 = "1"
 R2 = "2"
 COMPR = config["SUP_STAR_COMPR"]
+READ_EXT = config["READ_EXTENSION"]
 
 # Output files
 rule all:
@@ -74,8 +75,8 @@ rule star_index:
 rule star_map_reads:
   input:
     INDEX = INDEXS,
-    R1 = "input/{sample}"+SEP+R1+".fastq",
-    R2 = "input/{sample}"+SEP+R2+".fastq"
+    R1 = "input/{sample}"+SEP+R1+"."+READ_EXT,
+    R2 = "input/{sample}"+SEP+R2+"."+READ_EXT
   output:
     "star/sam/{sample}Aligned.out.sam"
   params:
@@ -92,8 +93,8 @@ rule star_map_reads:
 rule star_quantmode:
   input:
     INDEX = INDEXS,
-    R1 = "input/{sample}"+SEP+R1+".fastq",
-    R2 = "input/{sample}"+SEP+R2+".fastq"
+    R1 = "input/{sample}"+SEP+R1+"."+READ_EXT,
+    R2 = "input/{sample}"+SEP+R2+"."+READ_EXT
   output:
     "star/quantmode/{sample}ReadsPerGene.out.tab"
   params:
@@ -192,8 +193,8 @@ rule kallisto_index:
 
 rule kallisto_quant:
     input:
-        R1 = "input/{sample}"+SEP+R1+".fastq",
-        R2 = "input/{sample}"+SEP+R2+".fastq",
+        R1 = "input/{sample}"+SEP+R1+"."+READ_EXT,
+        R2 = "input/{sample}"+SEP+R2+"."+READ_EXT,
         INDEX = INDEXK
     params:
         outdire="kallisto/out/{sample}"
