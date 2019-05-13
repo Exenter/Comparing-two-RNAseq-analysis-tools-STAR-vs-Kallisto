@@ -3,7 +3,7 @@
 ###########################################################
 # Put the Snakefile in a folder along with the config.json, and an /input/ folder
 # Reads must be in the /input/ folder
-# You must change the read extension in the config file, ex: "READ_EXTENSION" : "fastq"
+# You must change the read extension in the config file, ex: "READ_EXTENSION" : ".fastq"
 # You must change the paths for the DNA, cDNA and the GTF file in the config.json file, ending with a /
 # The genomes must be .fa
 # If the reads are compressed, change the SUP_STAR_COMPR parameter in the config file to "--readFilesCommand zcat"
@@ -76,8 +76,8 @@ rule star_index:
 rule star_map_reads:
   input:
     INDEX = INDEXS,
-    R1 = "input/{sample}"+SEP+R1+"."+READ_EXT,
-    R2 = "input/{sample}"+SEP+R2+"."+READ_EXT
+    R1 = "input/{sample}"+SEP+R1+READ_EXT,
+    R2 = "input/{sample}"+SEP+R2+READ_EXT
   output:
     "star/sam/{sample}Aligned.out.sam"
   params:
@@ -94,8 +94,8 @@ rule star_map_reads:
 rule star_quantmode:
   input:
     INDEX = INDEXS,
-    R1 = "input/{sample}"+SEP+R1+"."+READ_EXT,
-    R2 = "input/{sample}"+SEP+R2+"."+READ_EXT
+    R1 = "input/{sample}"+SEP+R1+READ_EXT,
+    R2 = "input/{sample}"+SEP+R2+READ_EXT
   output:
     "star/quantmode/{sample}ReadsPerGene.out.tab"
   params:
@@ -172,7 +172,7 @@ rule htseq_count:
     BAM_SORTED = "star/bam/{sample}Aligned.out.sorted.bam",
     GTF = GTF
   output:
-    "star/out/{sample}counts_htseq.txt" #htseq counts et kallisto counts
+    "star/out/{sample}counts_htseq.txt" 
   benchmark:
     repeat("benchmarks/benchmark.star_htseqcount_{sample}.txt",1)
   message:
@@ -194,8 +194,8 @@ rule kallisto_index:
 
 rule kallisto_quant:
     input:
-        R1 = "input/{sample}"+SEP+R1+"."+READ_EXT,
-        R2 = "input/{sample}"+SEP+R2+"."+READ_EXT,
+        R1 = "input/{sample}"+SEP+R1+READ_EXT,
+        R2 = "input/{sample}"+SEP+R2+READ_EXT,
         INDEX = INDEXK
     params:
         outdire="kallisto/out/{sample}"
