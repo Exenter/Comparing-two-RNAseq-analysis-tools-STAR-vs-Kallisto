@@ -1,14 +1,16 @@
 # Comparing two RNAseq analysis tools
 
 This repository is the final deliverable for our tutored project as a group of Master bioinformatics students.  
-The goal was to make and benchmark 3 pipelines using StAR+HTseq count, STAR quantmode, and Kallisto for RNAseq analysis. These were made with Snakemake.  
-The Snakefile contains all 3 pipelines.
+The goal was to make and benchmark 3 pipelines using STAR+HTseq count, STAR quantmode, and Kallisto for RNAseq analysis. These were made with Snakemake.  
+The Snakefile contains all 3 pipelines. There is also a config file to allow easy customization of the pipeline.
   
 # Kallisto pipeline  
-Pretty straightforward, it runs the 2 main Kallisto commands, the first one indexes the fasta file, the second runs the quantification tool.  
+It runs the 2 main Kallisto commands:  
+   - The first one indexes the cDNA fasta file  
+   - The second runs the quantification tool  
+   - We added an extra transcript-to-gene tool to convert the counts to gene counts  
   
 # STAR-HTseq pipeline  
-A bit more sophisticated.  
 Here we have to use 3 different pieces of software :  
   - Star itself, to index the genome and map the reads on it  
   - Samtools, to convert the .sam output of Star into a .bam, and then to sort and index this file  
