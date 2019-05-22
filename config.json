@@ -1,0 +1,16 @@
+{ 
+"CDNA":"Homo_sapiens.GRCh37.cdna.all",
+"DNA" : "ERCC92_hg19",
+"GTF" : "Homo_sapiens.GRCh37.87.chr_good_name_ERCC92",
+"READ_EXTENSION" : "_sequence.txt.gz",
+"SEPARATOR":"_",
+"SAMPLE": ["HYL5LBGX2_RNA_C1_1_17s002464-1-1_Clouaire_lane117s002464", "HYL5LBGX2_RNA_C1_OHT_1_17s002465-1-1_Clouaire_lane117s002465", "HYL5LBGX2_RNA_STX_1_17s002466-1-1_Clouaire_lane117s002466", "HYL5LBGX2_RNA_STX_OHT_1_17s002467-1-1_Clouaire_lane117s002467", "HYMHNBGX2_RNA_C1_2_17s002468-1-1_Clouaire_lane117s002468", "HYMHNBGX2_RNA_C1_OHT_2_17s002469-1-1_Clouaire_lane117s002469", "HYMHNBGX2_RNA_STX_2_17s002470-1-1_Clouaire_lane117s002470", "HYMHNBGX2_RNA_STX_OHT_2_17s002471-1-1_Clouaire_lane117s002471"],
+"READ_LENGTH_MINUS_1" : 79,
+"SUP_STAR_COMPR" : "--readFilesCommand zcat",
+"THREADS" : 4,
+"DNA_PATH" : "/bioinfo_legube/VINCENT/PROJET_THESE/PROJET_M1/GENOME",
+"CDNA_PATH": "/bioinfo_legube/VINCENT/PROJET_THESE/PROJET_M1/GENOME",
+"GTF_PATH" : "/bioinfo_legube/VINCENT/PROJET_THESE/PROJET_M1/GENOME",
+"list_gene_transcripts":"/bioinfo_legube/VINCENT/PROJET_THESE/PROJET_M1/GENOME/Gene_to_transcript_ENSEMBL_V96.txt.gz",
+"TRANS_TO_GENE_CONVERSION":"count_for_genes.R"
+}
